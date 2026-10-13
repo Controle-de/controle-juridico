@@ -1,5 +1,5 @@
-const SUPABASE_URL = 'https://SEU-PROJETO.supabase.co';
-const SUPABASE_ANON_KEY = 'SUA_CHAVE_ANON_AQUI';
+const SUPABASE_URL = 'https://zhjidiawzfakvpqzzkgj.supabase.co/rest/v1/';
+const SUPABASE_ANON_KEY = 'sb_publishable_8r-0y1zS8pSsSUmOsQzzhA_Om68ICDk';
 
 // Garante que pega a função createClient da CDN
 const { createClient } = window.supabase || {};
