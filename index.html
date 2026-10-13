@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Controle de Documentos e Expedientes</title>
+  <link rel="stylesheet" href="css/style.css">
+  <!-- SDK do Supabase via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <header>
+    <h1>Gestão de Documentos & Prazos</h1>
+  </header>
+
+  <main>
+    <!-- Formulário de Cadastro -->
+    <section class="card-form">
+      <h2>Novo Documento</h2>
+      <form id="form-documento">
+        <select id="tipo" required>
+          <option value="">Selecione o tipo</option>
+          <option value="Expediente MP">Expediente MP</option>
+          <option value="Ofício">Ofício</option>
+          <option value="CI">Comunicação Interna (CI)</option>
+          <option value="Memorando">Memorando</option>
+        </select>
+        <input type="text" id="numero" placeholder="Identificador (ex: Ofício 12/2026)" required>
+        <input type="text" id="origem" placeholder="Remetente / Origem" required>
+        <input type="date" id="prazo" placeholder="Prazo Fatal">
+        <textarea id="assunto" placeholder="Resumo do assunto" required></textarea>
+        <input type="file" id="arquivo" accept=".pdf,.doc,.docx" required>
+        <button type="submit">Cadastrar Documento</button>
+      </form>
+    </section>
+
+    <!-- Tabela de Listagem -->
+    <section class="tabela-container">
+      <h2>Documentos Registrados</h2>
+      <table id="tabela-docs">
+        <thead>
+          <tr>
+            <th>Tipo / Número</th>
+            <th>Origem</th>
+            <th>Assunto</th>
+            <th>Prazo</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="corpo-tabela">
+          <!-- Linhas renderizadas via JS -->
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="js/supabaseClient.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
