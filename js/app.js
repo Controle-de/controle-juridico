@@ -1,20 +1,38 @@
 let tiposDisponiveis = [];
 
-document.addEventListener('DOMContentLoaded', () => {
-  const form = document.getElementById('form-documento');
-  const modalTipos = document.getElementById('modal-tipos');
-  const btnAbrirModal = document.getElementById('btn-abrir-modal-tipos');
-  const btnFecharModal = document.getElementById('btn-fechar-modal-tipos');
-  const btnAdicionarTipo = document.getElementById('btn-adicionar-tipo');
-  const novoTipoInput = document.getElementById('novo-tipo-nome');
-
-  // Gerenciamento do Modal de Tipos
-  if (btnAbrirModal) {
-    btnAbrirModal.addEventListener('click', () => {
-      modalTipos.style.display = 'flex';
-      renderizarListaTiposModal();
-    });
+// Funções para controle direto do modal na tela
+window.abrirModalTipos = function() {
+  const modal = document.getElementById('modal-tipos');
+  if (modal) {
+    modal.style.display = 'flex';
+    renderizarListaTiposModal();
   }
+};
+
+window.fecharModalTipos = function() {
+  const modal = document.getElementById('modal-tipos');
+  if (modal) modal.style.display = 'none';
+};
+
+window.adicionarNovoTipo = async function() {
+  const input = document.getElementById('novo-tipo-nome');
+  const nome = input ? input.value.trim() : '';
+  if (!nome) return alert('Digite o nome do novo tipo.');
+
+  try {
+    const { error } = await window.db
+      .from('tipos_documentos')
+      .insert([{ nome }]);
+
+    if (error) throw error;
+
+    input.value = '';
+    await carregarTipos();
+    renderizarListaTiposModal();
+  } catch (err) {
+    alert('Erro ao adicionar tipo: ' + err.message);
+  }
+};
 
   if (btnFecharModal) {
     btnFecharModal.addEventListener('click', () => {
@@ -54,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const fileInput = document.getElementById('arquivo');
         const file = fileInput.files[0];
-        let filePath = null;
+         filePath = null;
 
         if (file) {
           const ext = file.name.split('.').pop();
