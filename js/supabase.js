@@ -1,5 +1,5 @@
 // Substitua pelas suas credenciais do painel do Supabase
-const URL_SUPABASE = 'https://zhjidiawzfakvpqzzkgj.supabase.co';
+const URL_SUPABASE = 'https://zhjidiawzfakvpqzzkgj.supabase.co/rest/v1';
 const CHAVE_ANON = 'sb_publishable_8r-0y1zS8pSsSUmOsQzzhA_Om68ICDk';
 
 // Inicializa o cliente na variável global db
