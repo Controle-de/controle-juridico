@@ -4,7 +4,7 @@ async function uploadDocumento(arquivo) {
   const nomeUnico = `${Date.now()}-${Math.random().toString(36).substring(7)}.${extensao}`;
   const caminho = `anexos/${nomeUnico}`;
 
-  const { data, error } = await supabase.storage
+  const { data, error } = await supabaseClient.storage
     .from('documentos-juridicos')
     .upload(caminho, arquivo);
 
@@ -14,7 +14,7 @@ async function uploadDocumento(arquivo) {
 
 // 2. Inserir os dados na tabela 'documentos'
 async function cadastrarDocumento(dados) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('documentos')
     .insert([dados]);
 
@@ -24,7 +24,7 @@ async function cadastrarDocumento(dados) {
 
 // 3. Buscar os documentos com ordenação por prazo
 async function listarDocumentos() {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('documentos')
     .select('*')
     .order('prazo_fatal', { ascending: true, nullsFirst: false });
@@ -35,7 +35,7 @@ async function listarDocumentos() {
 
 // 4. Gerar link temporário para visualizar/baixar o arquivo seguro
 async function obterLinkArquivo(caminho) {
-  const { data, error } = await supabase.storage
+  const { data, error } = await supabaseClient.storage
     .from('documentos-juridicos')
     .createSignedUrl(caminho, 300); // 5 minutos de validade
 
