@@ -48,8 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
           numero_identificador: document.getElementById('numero').value,
           origem_remetente: document.getElementById('origem').value,
           assunto: document.getElementById('assunto').value,
-          arquivo_url: filePath,
-          status: 'Registrado'
+          arquivo_url: filePath
         };
 
         const { error: insertError } = await window.db
@@ -196,7 +195,7 @@ window.excluirTipo = async function(id) {
   }
 };
 
-// 4. Carregar e Renderizar Documentos
+// 4. Carregar e Renderizar Documentos (sem coluna de status)
 async function carregarDocumentos() {
   const tbody = document.getElementById('corpo-tabela');
   if (!tbody) return;
@@ -213,7 +212,7 @@ async function carregarDocumentos() {
     renderizarTabela();
   } catch (err) {
     console.error('Erro ao listar:', err);
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Erro: ${err.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Erro: ${err.message}</td></tr>`;
   }
 }
 
@@ -227,7 +226,7 @@ function renderizarTabela() {
 
   tbody.innerHTML = '';
   if (docsFiltrados.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#64748b;">Nenhum documento na categoria "${tipoAtivo}".</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#64748b;">Nenhum documento na categoria "${tipoAtivo}".</td></tr>`;
     return;
   }
 
@@ -239,7 +238,6 @@ function renderizarTabela() {
       <td>${doc.origem_remetente}</td>
       <td>${doc.assunto}</td>
       <td>${dataCriacao}</td>
-      <td><span class="badge">${doc.status || 'Registrado'}</span></td>
       <td>
         <div style="display: flex; gap: 6px; flex-wrap: wrap;">
           ${doc.arquivo_url ? `<button class="btn-acao btn-anexo" onclick="abrirArquivo('${doc.arquivo_url}')">Anexo</button>` : ''}
@@ -252,7 +250,7 @@ function renderizarTabela() {
   });
 }
 
-// 5. Edição e Exclusão de Documentos
+// 5. Edição e Exclusão de Documentos (sem status)
 window.abrirModalEdicao = function(id) {
   const doc = todosOsDocumentos.find(d => d.id === id);
   if (!doc) return;
@@ -262,7 +260,6 @@ window.abrirModalEdicao = function(id) {
   document.getElementById('edit-numero').value = doc.numero_identificador;
   document.getElementById('edit-origem').value = doc.origem_remetente;
   document.getElementById('edit-assunto').value = doc.assunto;
-  document.getElementById('edit-status').value = doc.status || 'Registrado';
 
   document.getElementById('modal-editar-doc').style.display = 'flex';
 };
@@ -273,8 +270,7 @@ window.salvarEdicaoDocumento = async function() {
     tipo: document.getElementById('edit-tipo').value,
     numero_identificador: document.getElementById('edit-numero').value,
     origem_remetente: document.getElementById('edit-origem').value,
-    assunto: document.getElementById('edit-assunto').value,
-    status: document.getElementById('edit-status').value
+    assunto: document.getElementById('edit-assunto').value
   };
 
   try {
@@ -297,7 +293,6 @@ window.excluirDocumento = async function(id, arquivoUrl) {
   if (!confirm('Deseja realmente excluir este documento? Essa ação não pode ser desfeita.')) return;
 
   try {
-    // Remove o registro da tabela
     const { error: dbError } = await window.db
       .from('documentos')
       .delete()
@@ -305,7 +300,6 @@ window.excluirDocumento = async function(id, arquivoUrl) {
 
     if (dbError) throw dbError;
 
-    // Se tiver arquivo anexado, remove do Storage
     if (arquivoUrl) {
       await window.db.storage
         .from('documentos-juridicos')
