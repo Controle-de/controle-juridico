@@ -1,66 +1,30 @@
 let tiposDisponiveis = [];
+let todosOsDocumentos = [];
+let tipoAtivo = 'TODOS';
 
+// 1. Cores e Tema Personalizado
+function aplicarCorSalva() {
+  const corSalva = localStorage.getItem('tema_cor_primaria') || '#1e3a8a';
+  document.documentElement.style.setProperty('--primary', corSalva);
+}
+
+window.mudarCorTema = function(cor) {
+  document.documentElement.style.setProperty('--primary', cor);
+  localStorage.setItem('tema_cor_primaria', cor);
+};
+
+// 2. Inicialização
 document.addEventListener('DOMContentLoaded', () => {
+  aplicarCorSalva();
+
   const form = document.getElementById('form-documento');
-  const modalTipos = document.getElementById('modal-tipos');
-  const btnAbrirModal = document.getElementById('btn-abrir-modal-tipos');
-  const btnFecharModal = document.getElementById('btn-fechar-modal-tipos');
-  const btnAdicionarTipo = document.getElementById('btn-adicionar-tipo');
-  const inputNovoTipo = document.getElementById('novo-tipo-nome');
 
-  // Abrir modal
-  if (btnAbrirModal) {
-    btnAbrirModal.addEventListener('click', () => {
-      if (modalTipos) {
-        modalTipos.style.display = 'flex';
-        renderizarListaTiposModal();
-      }
-    });
-  }
-
-  // Fechar modal
-  if (btnFecharModal) {
-    btnFecharModal.addEventListener('click', () => {
-      if (modalTipos) modalTipos.style.display = 'none';
-    });
-  }
-
-  // Fechar clicando fora da caixa
-  if (modalTipos) {
-    modalTipos.addEventListener('click', (e) => {
-      if (e.target === modalTipos) modalTipos.style.display = 'none';
-    });
-  }
-
-  // Adicionar tipo
-  if (btnAdicionarTipo) {
-    btnAdicionarTipo.addEventListener('click', async () => {
-      const nome = inputNovoTipo ? inputNovoTipo.value.trim() : '';
-      if (!nome) return alert('Digite o nome do novo tipo.');
-
-      try {
-        const { error } = await window.db
-          .from('tipos_documentos')
-          .insert([{ nome }]);
-
-        if (error) throw error;
-
-        inputNovoTipo.value = '';
-        await carregarTipos();
-        renderizarListaTiposModal();
-      } catch (err) {
-        alert('Erro ao adicionar: ' + err.message);
-      }
-    });
-  }
-
-  // Cadastro de Documentos
   if (form) {
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = form.querySelector('button[type="submit"]');
       btn.disabled = true;
-      btn.innerText = 'A guardar...';
+      btn.innerText = 'Guardando...';
 
       try {
         const fileInput = document.getElementById('arquivo');
@@ -94,11 +58,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (insertError) throw insertError;
 
-        alert('Documento guardado com sucesso!');
+        alert('Documento cadastrado com sucesso!');
         form.reset();
-        await carregarTabela();
+        await carregarDocumentos();
       } catch (err) {
-        console.error('Erro na gravação:', err);
+        console.error('Erro ao guardar:', err);
         alert('Erro ao guardar: ' + err.message);
       } finally {
         btn.disabled = false;
@@ -107,15 +71,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Inicializações
   carregarTipos();
-  carregarTabela();
+  carregarDocumentos();
 });
 
-// Busca os tipos do banco e popula o select
+// 3. Tipos e Abas Dinâmicas
 async function carregarTipos() {
   const selectTipo = document.getElementById('tipo');
-  if (!selectTipo) return;
+  const selectEditTipo = document.getElementById('edit-tipo');
 
   try {
     const { data, error } = await window.db
@@ -126,21 +89,61 @@ async function carregarTipos() {
     if (error) throw error;
 
     tiposDisponiveis = data || [];
-    selectTipo.innerHTML = '<option value="">Selecione o tipo</option>';
 
-    tiposDisponiveis.forEach(item => {
-      const opt = document.createElement('option');
-      opt.value = item.nome;
-      opt.textContent = item.nome;
-      selectTipo.appendChild(opt);
-    });
+    if (selectTipo) {
+      selectTipo.innerHTML = '<option value="">Selecione o tipo</option>';
+      tiposDisponiveis.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item.nome;
+        opt.textContent = item.nome;
+        selectTipo.appendChild(opt);
+      });
+    }
+
+    if (selectEditTipo) {
+      selectEditTipo.innerHTML = '';
+      tiposDisponiveis.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item.nome;
+        opt.textContent = item.nome;
+        selectEditTipo.appendChild(opt);
+      });
+    }
+
+    renderizarAbas();
   } catch (err) {
-    console.error('Erro ao buscar tipos:', err);
+    console.error('Erro ao carregar tipos:', err);
   }
 }
 
-// Renderiza a lista no modal
-function renderizarListaTiposModal() {
+function renderizarAbas() {
+  const container = document.getElementById('abas-tipos');
+  if (!container) return;
+
+  container.innerHTML = '';
+
+  const btnTodos = document.createElement('button');
+  btnTodos.className = `tab-btn ${tipoAtivo === 'TODOS' ? 'active' : ''}`;
+  btnTodos.innerText = '📁 Todos';
+  btnTodos.onclick = () => alternarAba('TODOS');
+  container.appendChild(btnTodos);
+
+  tiposDisponiveis.forEach(t => {
+    const btn = document.createElement('button');
+    btn.className = `tab-btn ${tipoAtivo === t.nome ? 'active' : ''}`;
+    btn.innerText = t.nome;
+    btn.onclick = () => alternarAba(t.nome);
+    container.appendChild(btn);
+  });
+}
+
+function alternarAba(tipo) {
+  tipoAtivo = tipo;
+  renderizarAbas();
+  renderizarTabela();
+}
+
+window.renderizarListaTiposModal = function() {
   const lista = document.getElementById('lista-tipos');
   if (!lista) return;
 
@@ -149,16 +152,35 @@ function renderizarListaTiposModal() {
     const li = document.createElement('li');
     li.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f1f5f9;';
     li.innerHTML = `
-      <span style="font-size: 0.95rem; color: #334155;">${item.nome}</span>
+      <span>${item.nome}</span>
       <button onclick="excluirTipo('${item.id}')" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 0.85rem; font-weight: 600;">Excluir</button>
     `;
     lista.appendChild(li);
   });
-}
+};
 
-// Excluir tipo
+window.adicionarNovoTipo = async function() {
+  const input = document.getElementById('novo-tipo-nome');
+  const nome = input ? input.value.trim() : '';
+  if (!nome) return alert('Digite o nome do novo tipo.');
+
+  try {
+    const { error } = await window.db
+      .from('tipos_documentos')
+      .insert([{ nome }]);
+
+    if (error) throw error;
+
+    input.value = '';
+    await carregarTipos();
+    renderizarListaTiposModal();
+  } catch (err) {
+    alert('Erro ao adicionar tipo: ' + err.message);
+  }
+};
+
 window.excluirTipo = async function(id) {
-  if (!confirm('Deseja excluir este tipo de documento?')) return;
+  if (!confirm('Deseja excluir este tipo?')) return;
   try {
     const { error } = await window.db
       .from('tipos_documentos')
@@ -174,8 +196,8 @@ window.excluirTipo = async function(id) {
   }
 };
 
-// Carrega os documentos cadastrados
-async function carregarTabela() {
+// 4. Carregar e Renderizar Documentos
+async function carregarDocumentos() {
   const tbody = document.getElementById('corpo-tabela');
   if (!tbody) return;
 
@@ -187,34 +209,116 @@ async function carregarTabela() {
 
     if (error) throw error;
 
-    tbody.innerHTML = '';
-    if (!docs || docs.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Nenhum documento encontrado.</td></tr>';
-      return;
-    }
-
-    docs.forEach(doc => {
-      const dataCriacao = doc.created_at ? new Date(doc.created_at).toLocaleDateString('pt-BR') : '-';
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><strong>${doc.tipo}</strong><br><small style="color:#64748b;">${doc.numero_identificador}</small></td>
-        <td>${doc.origem_remetente}</td>
-        <td>${doc.assunto}</td>
-        <td>${dataCriacao}</td>
-        <td><span class="badge" style="background:#dcfce7; color:#15803d;">${doc.status || 'Registrado'}</span></td>
-        <td>
-          ${doc.arquivo_url ? `<button onclick="abrirArquivo('${doc.arquivo_url}')">Ver Anexo</button>` : 'Sem anexo'}
-        </td>
-      `;
-      tbody.appendChild(tr);
-    });
+    todosOsDocumentos = docs || [];
+    renderizarTabela();
   } catch (err) {
-    console.error('Erro ao listar documentos:', err);
+    console.error('Erro ao listar:', err);
     tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Erro: ${err.message}</td></tr>`;
   }
 }
 
-// Abrir anexo em nova aba
+function renderizarTabela() {
+  const tbody = document.getElementById('corpo-tabela');
+  if (!tbody) return;
+
+  const docsFiltrados = tipoAtivo === 'TODOS'
+    ? todosOsDocumentos
+    : todosOsDocumentos.filter(d => d.tipo === tipoAtivo);
+
+  tbody.innerHTML = '';
+  if (docsFiltrados.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#64748b;">Nenhum documento na categoria "${tipoAtivo}".</td></tr>`;
+    return;
+  }
+
+  docsFiltrados.forEach(doc => {
+    const dataCriacao = doc.created_at ? new Date(doc.created_at).toLocaleDateString('pt-BR') : '-';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${doc.tipo}</strong><br><small style="color:#64748b;">${doc.numero_identificador}</small></td>
+      <td>${doc.origem_remetente}</td>
+      <td>${doc.assunto}</td>
+      <td>${dataCriacao}</td>
+      <td><span class="badge">${doc.status || 'Registrado'}</span></td>
+      <td>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+          ${doc.arquivo_url ? `<button class="btn-acao btn-anexo" onclick="abrirArquivo('${doc.arquivo_url}')">Anexo</button>` : ''}
+          <button class="btn-acao btn-editar" onclick="abrirModalEdicao('${doc.id}')">Editar</button>
+          <button class="btn-acao btn-excluir" onclick="excluirDocumento('${doc.id}', '${doc.arquivo_url || ''}')">Excluir</button>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// 5. Edição e Exclusão de Documentos
+window.abrirModalEdicao = function(id) {
+  const doc = todosOsDocumentos.find(d => d.id === id);
+  if (!doc) return;
+
+  document.getElementById('edit-doc-id').value = doc.id;
+  document.getElementById('edit-tipo').value = doc.tipo;
+  document.getElementById('edit-numero').value = doc.numero_identificador;
+  document.getElementById('edit-origem').value = doc.origem_remetente;
+  document.getElementById('edit-assunto').value = doc.assunto;
+  document.getElementById('edit-status').value = doc.status || 'Registrado';
+
+  document.getElementById('modal-editar-doc').style.display = 'flex';
+};
+
+window.salvarEdicaoDocumento = async function() {
+  const id = document.getElementById('edit-doc-id').value;
+  const updates = {
+    tipo: document.getElementById('edit-tipo').value,
+    numero_identificador: document.getElementById('edit-numero').value,
+    origem_remetente: document.getElementById('edit-origem').value,
+    assunto: document.getElementById('edit-assunto').value,
+    status: document.getElementById('edit-status').value
+  };
+
+  try {
+    const { error } = await window.db
+      .from('documentos')
+      .update(updates)
+      .eq('id', id);
+
+    if (error) throw error;
+
+    document.getElementById('modal-editar-doc').style.display = 'none';
+    alert('Documento atualizado com sucesso!');
+    await carregarDocumentos();
+  } catch (err) {
+    alert('Erro ao atualizar: ' + err.message);
+  }
+};
+
+window.excluirDocumento = async function(id, arquivoUrl) {
+  if (!confirm('Deseja realmente excluir este documento? Essa ação não pode ser desfeita.')) return;
+
+  try {
+    // Remove o registro da tabela
+    const { error: dbError } = await window.db
+      .from('documentos')
+      .delete()
+      .eq('id', id);
+
+    if (dbError) throw dbError;
+
+    // Se tiver arquivo anexado, remove do Storage
+    if (arquivoUrl) {
+      await window.db.storage
+        .from('documentos-juridicos')
+        .remove([arquivoUrl]);
+    }
+
+    alert('Documento excluído com sucesso!');
+    await carregarDocumentos();
+  } catch (err) {
+    alert('Erro ao excluir: ' + err.message);
+  }
+};
+
 window.abrirArquivo = async function(caminho) {
   try {
     const { data, error } = await window.db.storage
