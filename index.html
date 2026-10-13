@@ -59,7 +59,7 @@
     <div id="modal-cores" class="modal-overlay">
       <div class="modal-content">
         <h3 style="margin-bottom: 16px; color: var(--primary);">Paleta de Cores do Sistema</h3>
-        <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 16px;">Selecione a cor de sua preferência:</p>
+        <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 16px;">Selecione o tom desejado:</p>
         
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px;">
           <button onclick="mudarCorTema('#1e3a8a')" style="background: #1e3a8a; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">Azul Jurídico</button>
@@ -79,7 +79,7 @@
       </div>
     </div>
 
-    <!-- Modal: Editar Documento -->
+    <!-- Modal: Editar Documento (sem campo de status) -->
     <div id="modal-editar-doc" class="modal-overlay">
       <div class="modal-content modal-body">
         <h3 style="margin-bottom: 16px; color: var(--primary);">Editar Documento</h3>
@@ -95,14 +95,7 @@
         <input type="text" id="edit-origem" style="margin-bottom: 12px;" required>
 
         <label style="font-size: 0.85rem; font-weight: 600; color: #475569;">Assunto</label>
-        <textarea id="edit-assunto" style="margin-bottom: 12px; min-height: 80px;" required></textarea>
-
-        <label style="font-size: 0.85rem; font-weight: 600; color: #475569;">Status</label>
-        <select id="edit-status" style="margin-bottom: 20px;">
-          <option value="Registrado">Registrado</option>
-          <option value="Em Andamento">Em Andamento</option>
-          <option value="Concluído">Concluído</option>
-        </select>
+        <textarea id="edit-assunto" style="margin-bottom: 20px; min-height: 80px;" required></textarea>
 
         <div style="display: flex; justify-content: flex-end; gap: 8px;">
           <button type="button" onclick="document.getElementById('modal-editar-doc').style.display='none';" style="padding: 8px 16px; background: #e2e8f0; color: #334155; border: none; border-radius: 6px; cursor: pointer;">Cancelar</button>
@@ -111,7 +104,7 @@
       </div>
     </div>
 
-    <!-- Tabela com Abas -->
+    <!-- Tabela com Abas (Coluna de Status Removida) -->
     <section class="tabela-container">
       <h2>Documentos Registados</h2>
 
@@ -125,12 +118,11 @@
             <th>Origem</th>
             <th>Assunto</th>
             <th>Data de Registo</th>
-            <th>Status</th>
             <th>Ações</th>
           </tr>
         </thead>
         <tbody id="corpo-tabela">
-          <tr><td colspan="6" style="text-align:center;">Carregando...</td></tr>
+          <tr><td colspan="5" style="text-align:center;">Carregando...</td></tr>
         </tbody>
       </table>
     </section>
