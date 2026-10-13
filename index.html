@@ -9,12 +9,19 @@
 </head>
 <body>
 
-  <!-- Tela de Login (Exibida quando não autenticado) -->
-  <div id="secao-login" style="display: flex; min-height: 80vh; align-items: center; justify-content: center;">
-    <div style="background: white; padding: 32px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; border: 1px solid var(--border-color);">
-      <h2 style="color: var(--primary); margin-bottom: 8px; text-align: center;">Área Restrita</h2>
-      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px; text-align: center;">Gestão de Documentos & Processos</p>
+  <!-- Tela de Acesso: Login & Criar Conta -->
+  <div id="secao-login" style="display: flex; min-height: 85vh; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 32px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 100%; max-width: 420px; border: 1px solid var(--border-color);">
+      <h2 style="color: var(--primary); margin-bottom: 6px; text-align: center;">Área Restrita</h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px; text-align: center;">Gestão de Documentos & Processos</p>
 
+      <!-- Alternador de Abas (Entrar / Criar Conta) -->
+      <div style="display: flex; gap: 8px; margin-bottom: 20px; background: #f1f5f9; padding: 4px; border-radius: 8px;">
+        <button type="button" id="tab-btn-entrar" onclick="alternarAbaAuth('entrar')" style="flex: 1; padding: 8px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; background: white; color: var(--primary);">Entrar</button>
+        <button type="button" id="tab-btn-cadastrar" onclick="alternarAbaAuth('cadastrar')" style="flex: 1; padding: 8px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; background: transparent; color: var(--text-muted);">Criar Conta</button>
+      </div>
+
+      <!-- Formulário: Entrar -->
       <form id="form-login" style="display: flex; flex-direction: column; gap: 14px;">
         <div>
           <label style="font-size: 0.85rem; font-weight: 600; color: #475569;">E-mail</label>
@@ -26,12 +33,34 @@
           <input type="password" id="login-senha" placeholder="••••••••" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; margin-top: 4px;">
         </div>
 
-        <button type="submit" id="btn-login" style="padding: 12px; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: 8px;">Entrar no Sistema</button>
+        <button type="submit" id="btn-login" style="padding: 12px; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: 6px;">Acessar o Painel</button>
+      </form>
+
+      <!-- Formulário: Criar Conta & Gerador de Senhas -->
+      <form id="form-cadastro-usuario" style="display: none; flex-direction: column; gap: 14px;">
+        <div>
+          <label style="font-size: 0.85rem; font-weight: 600; color: #475569;">E-mail para Acesso</label>
+          <input type="email" id="novo-user-email" placeholder="advogada@prefeitura.gov.br" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; margin-top: 4px;">
+        </div>
+
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <label style="font-size: 0.85rem; font-weight: 600; color: #475569;">Definir Senha</label>
+            <button type="button" onclick="gerarSenhaAleatoria()" style="background: none; border: none; color: var(--primary); font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline;">⚡ Gerar Senha Forte</button>
+          </div>
+          <div style="display: flex; gap: 6px; margin-top: 4px;">
+            <input type="text" id="novo-user-senha" placeholder="Mínimo de 6 dígitos" required minlength="6" style="flex: 1; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px;">
+            <button type="button" onclick="copiarSenhaGerada()" title="Copiar senha" style="padding: 10px 12px; background: #e2e8f0; border: none; border-radius: 6px; cursor: pointer;">📋</button>
+          </div>
+          <small style="color: var(--text-muted); font-size: 0.75rem;">A senha gerada pode ser copiada e salva em segurança.</small>
+        </div>
+
+        <button type="submit" id="btn-cadastrar-user" style="padding: 12px; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: 6px;">Criar e Armazenar Acesso</button>
       </form>
     </div>
   </div>
 
-  <!-- Painel do Sistema (Exibido após login) -->
+  <!-- Painel do Sistema (Carregado após autenticação) -->
   <div id="secao-sistema" style="display: none;">
     <header>
       <h1>Gestão de Documentos</h1>
