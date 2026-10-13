@@ -1,49 +1,42 @@
 let tiposDisponiveis = [];
 
-// Funções para controle direto do modal na tela
-window.abrirModalTipos = function() {
-  const modal = document.getElementById('modal-tipos');
-  if (modal) {
-    modal.style.display = 'flex';
-    renderizarListaTiposModal();
-  }
-};
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('form-documento');
+  const modalTipos = document.getElementById('modal-tipos');
+  const btnAbrirModal = document.getElementById('btn-abrir-modal-tipos');
+  const btnFecharModal = document.getElementById('btn-fechar-modal-tipos');
+  const btnAdicionarTipo = document.getElementById('btn-adicionar-tipo');
+  const inputNovoTipo = document.getElementById('novo-tipo-nome');
 
-window.fecharModalTipos = function() {
-  const modal = document.getElementById('modal-tipos');
-  if (modal) modal.style.display = 'none';
-};
-
-window.adicionarNovoTipo = async function() {
-  const input = document.getElementById('novo-tipo-nome');
-  const nome = input ? input.value.trim() : '';
-  if (!nome) return alert('Digite o nome do novo tipo.');
-
-  try {
-    const { error } = await window.db
-      .from('tipos_documentos')
-      .insert([{ nome }]);
-
-    if (error) throw error;
-
-    input.value = '';
-    await carregarTipos();
-    renderizarListaTiposModal();
-  } catch (err) {
-    alert('Erro ao adicionar tipo: ' + err.message);
-  }
-};
-
-  if (btnFecharModal) {
-    btnFecharModal.addEventListener('click', () => {
-      modalTipos.style.display = 'none';
+  // Abrir modal
+  if (btnAbrirModal) {
+    btnAbrirModal.addEventListener('click', () => {
+      if (modalTipos) {
+        modalTipos.style.display = 'flex';
+        renderizarListaTiposModal();
+      }
     });
   }
 
+  // Fechar modal
+  if (btnFecharModal) {
+    btnFecharModal.addEventListener('click', () => {
+      if (modalTipos) modalTipos.style.display = 'none';
+    });
+  }
+
+  // Fechar clicando fora da caixa
+  if (modalTipos) {
+    modalTipos.addEventListener('click', (e) => {
+      if (e.target === modalTipos) modalTipos.style.display = 'none';
+    });
+  }
+
+  // Adicionar tipo
   if (btnAdicionarTipo) {
     btnAdicionarTipo.addEventListener('click', async () => {
-      const nome = novoTipoInput.value.trim();
-      if (!nome) return alert('Digite o nome do tipo.');
+      const nome = inputNovoTipo ? inputNovoTipo.value.trim() : '';
+      if (!nome) return alert('Digite o nome do novo tipo.');
 
       try {
         const { error } = await window.db
@@ -52,11 +45,11 @@ window.adicionarNovoTipo = async function() {
 
         if (error) throw error;
 
-        novoTipoInput.value = '';
+        inputNovoTipo.value = '';
         await carregarTipos();
         renderizarListaTiposModal();
       } catch (err) {
-        alert('Erro ao adicionar tipo: ' + err.message);
+        alert('Erro ao adicionar: ' + err.message);
       }
     });
   }
@@ -72,7 +65,7 @@ window.adicionarNovoTipo = async function() {
       try {
         const fileInput = document.getElementById('arquivo');
         const file = fileInput.files[0];
-         filePath = null;
+        let filePath = null;
 
         if (file) {
           const ext = file.name.split('.').pop();
@@ -103,9 +96,9 @@ window.adicionarNovoTipo = async function() {
 
         alert('Documento guardado com sucesso!');
         form.reset();
-        carregarTabela();
+        await carregarTabela();
       } catch (err) {
-        console.error('Erro ao guardar:', err);
+        console.error('Erro na gravação:', err);
         alert('Erro ao guardar: ' + err.message);
       } finally {
         btn.disabled = false;
@@ -114,12 +107,12 @@ window.adicionarNovoTipo = async function() {
     });
   }
 
-  // Carregamentos iniciais
+  // Inicializações
   carregarTipos();
   carregarTabela();
 });
 
-// Busca os tipos do banco e preenche o select
+// Busca os tipos do banco e popula o select
 async function carregarTipos() {
   const selectTipo = document.getElementById('tipo');
   if (!selectTipo) return;
@@ -142,11 +135,11 @@ async function carregarTipos() {
       selectTipo.appendChild(opt);
     });
   } catch (err) {
-    console.error('Erro ao carregar tipos:', err);
+    console.error('Erro ao buscar tipos:', err);
   }
 }
 
-// Renderiza a lista com botão de exclusão dentro do modal
+// Renderiza a lista no modal
 function renderizarListaTiposModal() {
   const lista = document.getElementById('lista-tipos');
   if (!lista) return;
@@ -156,16 +149,16 @@ function renderizarListaTiposModal() {
     const li = document.createElement('li');
     li.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f1f5f9;';
     li.innerHTML = `
-      <span>${item.nome}</span>
-      <button onclick="excluirTipo('${item.id}')" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 0.9rem;">Excluir</button>
+      <span style="font-size: 0.95rem; color: #334155;">${item.nome}</span>
+      <button onclick="excluirTipo('${item.id}')" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 0.85rem; font-weight: 600;">Excluir</button>
     `;
     lista.appendChild(li);
   });
 }
 
-// Função para excluir tipo
+// Excluir tipo
 window.excluirTipo = async function(id) {
-  if (!confirm('Deseja realmente remover esta opção?')) return;
+  if (!confirm('Deseja excluir este tipo de documento?')) return;
   try {
     const { error } = await window.db
       .from('tipos_documentos')
@@ -177,7 +170,7 @@ window.excluirTipo = async function(id) {
     await carregarTipos();
     renderizarListaTiposModal();
   } catch (err) {
-    alert('Erro ao remover: ' + err.message);
+    alert('Erro ao excluir: ' + err.message);
   }
 };
 
@@ -201,13 +194,13 @@ async function carregarTabela() {
     }
 
     docs.forEach(doc => {
-      const dataFormatada = doc.created_at ? new Date(doc.created_at).toLocaleDateString('pt-BR') : '-';
+      const dataCriacao = doc.created_at ? new Date(doc.created_at).toLocaleDateString('pt-BR') : '-';
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><span class="badge">${doc.tipo}</span><br><small style="color:#64748b;">${doc.numero_identificador}</small></td>
+        <td><strong>${doc.tipo}</strong><br><small style="color:#64748b;">${doc.numero_identificador}</small></td>
         <td>${doc.origem_remetente}</td>
         <td>${doc.assunto}</td>
-        <td>${dataFormatada}</td>
+        <td>${dataCriacao}</td>
         <td><span class="badge" style="background:#dcfce7; color:#15803d;">${doc.status || 'Registrado'}</span></td>
         <td>
           ${doc.arquivo_url ? `<button onclick="abrirArquivo('${doc.arquivo_url}')">Ver Anexo</button>` : 'Sem anexo'}
@@ -216,11 +209,12 @@ async function carregarTabela() {
       tbody.appendChild(tr);
     });
   } catch (err) {
-    console.error('Erro ao listar:', err);
+    console.error('Erro ao listar documentos:', err);
     tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Erro: ${err.message}</td></tr>`;
   }
 }
 
+// Abrir anexo em nova aba
 window.abrirArquivo = async function(caminho) {
   try {
     const { data, error } = await window.db.storage
