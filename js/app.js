@@ -2,7 +2,7 @@ let tiposDisponiveis = [];
 let todosOsDocumentos = [];
 let tipoAtivo = 'TODOS';
 
-// 1. Cores e Tema Personalizado
+// 1. Controle de Cores
 function aplicarCorSalva() {
   const corSalva = localStorage.getItem('tema_cor_primaria') || '#1e3a8a';
   document.documentElement.style.setProperty('--primary', corSalva);
@@ -13,16 +13,71 @@ window.mudarCorTema = function(cor) {
   localStorage.setItem('tema_cor_primaria', cor);
 };
 
-// 2. Inicialização
+// 2. Fluxo de Autenticação (Login / Sessão / Logout)
+async function verificarSessao() {
+  const { data: { session } } = await window.db.auth.getSession();
+  alternarVisao(session);
+
+  // Escuta login e logout em tempo real
+  window.db.auth.onAuthStateChange((_event, session) => {
+    alternarVisao(session);
+  });
+}
+
+function alternarVisao(session) {
+  const secaoLogin = document.getElementById('secao-login');
+  const secaoSistema = document.getElementById('secao-sistema');
+
+  if (session) {
+    if (secaoLogin) secaoLogin.style.display = 'none';
+    if (secaoSistema) secaoSistema.style.display = 'block';
+    carregarTipos();
+    carregarDocumentos();
+  } else {
+    if (secaoLogin) secaoLogin.style.display = 'flex';
+    if (secaoSistema) secaoSistema.style.display = 'none';
+  }
+}
+
+window.fazerLogout = async function() {
+  await window.db.auth.signOut();
+};
+
+// 3. Inicialização e Eventos
 document.addEventListener('DOMContentLoaded', () => {
   aplicarCorSalva();
+  verificarSessao();
 
-  const form = document.getElementById('form-documento');
-
-  if (form) {
-    form.addEventListener('submit', async (e) => {
+  // Envio do Login
+  const formLogin = document.getElementById('form-login');
+  if (formLogin) {
+    formLogin.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const btn = form.querySelector('button[type="submit"]');
+      const btn = document.getElementById('btn-login');
+      btn.disabled = true;
+      btn.innerText = 'Verificando...';
+
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-senha').value;
+
+      try {
+        const { error } = await window.db.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+      } catch (err) {
+        alert('Falha ao entrar: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Entrar no Sistema';
+      }
+    });
+  }
+
+  // Cadastro de Documentos
+  const formDoc = document.getElementById('form-documento');
+  if (formDoc) {
+    formDoc.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = formDoc.querySelector('button[type="submit"]');
       btn.disabled = true;
       btn.innerText = 'Guardando...';
 
@@ -58,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (insertError) throw insertError;
 
         alert('Documento cadastrado com sucesso!');
-        form.reset();
+        formDoc.reset();
         await carregarDocumentos();
       } catch (err) {
         console.error('Erro ao guardar:', err);
@@ -69,12 +124,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-
-  carregarTipos();
-  carregarDocumentos();
 });
 
-// 3. Tipos e Abas Dinâmicas
+// 4. Tipos e Abas
 async function carregarTipos() {
   const selectTipo = document.getElementById('tipo');
   const selectEditTipo = document.getElementById('edit-tipo');
@@ -195,7 +247,7 @@ window.excluirTipo = async function(id) {
   }
 };
 
-// 4. Carregar e Renderizar Documentos (sem coluna de status)
+// 5. Carregar e Renderizar Documentos
 async function carregarDocumentos() {
   const tbody = document.getElementById('corpo-tabela');
   if (!tbody) return;
@@ -250,7 +302,7 @@ function renderizarTabela() {
   });
 }
 
-// 5. Edição e Exclusão de Documentos (sem status)
+// 6. Edição e Exclusão de Documentos
 window.abrirModalEdicao = function(id) {
   const doc = todosOsDocumentos.find(d => d.id === id);
   if (!doc) return;
