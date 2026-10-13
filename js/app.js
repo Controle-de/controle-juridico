@@ -2,7 +2,7 @@ let tiposDisponiveis = [];
 let todosOsDocumentos = [];
 let tipoAtivo = 'TODOS';
 
-// 1. Controle de Cores
+// 1. Cores e Tema Personalizado
 function aplicarCorSalva() {
   const corSalva = localStorage.getItem('tema_cor_primaria') || '#1e3a8a';
   document.documentElement.style.setProperty('--primary', corSalva);
@@ -13,12 +13,59 @@ window.mudarCorTema = function(cor) {
   localStorage.setItem('tema_cor_primaria', cor);
 };
 
-// 2. Fluxo de Autenticação (Login / Sessão / Logout)
+// 2. Fluxo de Autenticação & Abas de Login/Cadastro
+function alternarAbaAuth(aba) {
+  const formLogin = document.getElementById('form-login');
+  const formCadastro = document.getElementById('form-cadastro-usuario');
+  const btnEntrar = document.getElementById('tab-btn-entrar');
+  const btnCadastrar = document.getElementById('tab-btn-cadastrar');
+
+  if (aba === 'entrar') {
+    formLogin.style.display = 'flex';
+    formCadastro.style.display = 'none';
+    btnEntrar.style.background = 'white';
+    btnEntrar.style.color = 'var(--primary)';
+    btnCadastrar.style.background = 'transparent';
+    btnCadastrar.style.color = 'var(--text-muted)';
+  } else {
+    formLogin.style.display = 'none';
+    formCadastro.style.display = 'flex';
+    btnCadastrar.style.background = 'white';
+    btnCadastrar.style.color = 'var(--primary)';
+    btnEntrar.style.background = 'transparent';
+    btnEntrar.style.color = 'var(--text-muted)';
+  }
+}
+window.alternarAbaAuth = alternarAbaAuth;
+
+// Gerador e Copiador de Senhas
+window.gerarSenhaAleatoria = function() {
+  const caracteres = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%&*';
+  let senha = '';
+  for (let i = 0; i < 12; i++) {
+    senha += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
+  }
+  const inputSenha = document.getElementById('novo-user-senha');
+  if (inputSenha) {
+    inputSenha.value = senha;
+    inputSenha.focus();
+  }
+};
+
+window.copiarSenhaGerada = function() {
+  const inputSenha = document.getElementById('novo-user-senha');
+  if (!inputSenha || !inputSenha.value) return alert('Nenhuma senha para copiar.');
+
+  navigator.clipboard.writeText(inputSenha.value)
+    .then(() => alert('Senha copiada para a área de transferência!'))
+    .catch(() => alert('Erro ao copiar senha.'));
+};
+
+// Sessão e Logout
 async function verificarSessao() {
   const { data: { session } } = await window.db.auth.getSession();
   alternarVisao(session);
 
-  // Escuta login e logout em tempo real
   window.db.auth.onAuthStateChange((_event, session) => {
     alternarVisao(session);
   });
@@ -43,12 +90,12 @@ window.fazerLogout = async function() {
   await window.db.auth.signOut();
 };
 
-// 3. Inicialização e Eventos
+// 3. Inicialização e Submissão de Formulários
 document.addEventListener('DOMContentLoaded', () => {
   aplicarCorSalva();
   verificarSessao();
 
-  // Envio do Login
+  // Formulário: Login
   const formLogin = document.getElementById('form-login');
   if (formLogin) {
     formLogin.addEventListener('submit', async (e) => {
@@ -67,12 +114,46 @@ document.addEventListener('DOMContentLoaded', () => {
         alert('Falha ao entrar: ' + err.message);
       } finally {
         btn.disabled = false;
-        btn.innerText = 'Entrar no Sistema';
+        btn.innerText = 'Acessar o Painel';
       }
     });
   }
 
-  // Cadastro de Documentos
+  // Formulário: Criar Login e Armazenar Senha
+  const formCadastroUser = document.getElementById('form-cadastro-usuario');
+  if (formCadastroUser) {
+    formCadastroUser.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('btn-cadastrar-user');
+      btn.disabled = true;
+      btn.innerText = 'Criando conta...';
+
+      const email = document.getElementById('novo-user-email').value;
+      const password = document.getElementById('novo-user-senha').value;
+
+      try {
+        const { data, error } = await window.db.auth.signUp({ email, password });
+        if (error) throw error;
+
+        alert('Acesso criado e armazenado com sucesso!');
+        formCadastroUser.reset();
+
+        // Se o e-mail não exigiu confirmação, já entra direto; senão, volta pra aba de entrar
+        if (data?.session) {
+          alternarVisao(data.session);
+        } else {
+          alternarAbaAuth('entrar');
+        }
+      } catch (err) {
+        alert('Erro ao registrar usuário: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Criar e Armazenar Acesso';
+      }
+    });
+  }
+
+  // Formulário: Cadastrar Documento
   const formDoc = document.getElementById('form-documento');
   if (formDoc) {
     formDoc.addEventListener('submit', async (e) => {
@@ -247,7 +328,7 @@ window.excluirTipo = async function(id) {
   }
 };
 
-// 5. Carregar e Renderizar Documentos
+// 5. Listagem de Documentos
 async function carregarDocumentos() {
   const tbody = document.getElementById('corpo-tabela');
   if (!tbody) return;
@@ -302,7 +383,7 @@ function renderizarTabela() {
   });
 }
 
-// 6. Edição e Exclusão de Documentos
+// 6. Edição e Exclusão
 window.abrirModalEdicao = function(id) {
   const doc = todosOsDocumentos.find(d => d.id === id);
   if (!doc) return;
